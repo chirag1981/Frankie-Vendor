@@ -25,24 +25,28 @@ jobs:
           channel: 'stable'
           cache: true
 
+      - name: Accept Android Licenses
+        run: yes | flutter doctor --android-licenses || true
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: 'pip'
 
-      - name: Install Python Dependencies & Flet
+      - name: Install Python Dependencies & Flet CLI
         run: |
           python -m pip install --upgrade pip
-          pip install flet fpdf2
+          pip install -r requirements.txt
 
       - name: Verify Environment
         run: |
           flutter doctor -v
+          flet --version
 
       - name: Build Android APK
         run: |
-          flet build apk --project "QuickVendorInvoice" --product "Quick Vendor Invoice" --org "com.vendor.invoice" -v
+          flet build apk --project "QuickVendorInvoice" --product "Quick Vendor Invoice" --org "com.vendor.invoice" -vv
 
       - name: Locate & Upload APK Artifact
         uses: actions/upload-artifact@v4
