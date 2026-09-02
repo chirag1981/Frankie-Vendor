@@ -36,14 +36,14 @@ jobs:
           python-version: '3.11'
           cache: 'pip'
 
-      - name: Install Python Dependencies & Flet CLI
+      - name: Install Build Tools & Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install flet flet-cli fpdf2
 
       - name: Build Android APK
         run: |
-          python -m flet_cli.cli build apk . \
+          flet build apk . \
             --project "QuickVendorInvoice" \
             --product "Quick Vendor Invoice" \
             --org "com.vendor.invoice" \
@@ -53,7 +53,12 @@ jobs:
             --no-rich-output \
             -vv
 
-      - name: Locate & Upload APK Artifact
+      - name: List Generated Build Files
+        if: always()
+        run: |
+          find build -type f -name "*.apk" || true
+
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: Quick-Vendor-Invoice-APK

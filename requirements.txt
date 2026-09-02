@@ -1,4 +1,2 @@
-flet==0.86.5
-flet-cli==0.86.5
-flet-web==0.86.5
-fpdf2>=2.8.0
+flet
+fpdf2
