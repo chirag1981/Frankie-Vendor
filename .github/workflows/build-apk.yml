@@ -41,7 +41,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install flet flet-cli fpdf2
 
-      - name: Build Android APK
+      - name: Build Android APK (Optimized & Split by ABI)
         run: |
           flet build apk . \
             --project "QuickVendorInvoice" \
@@ -49,6 +49,9 @@ jobs:
             --org "com.vendor.invoice" \
             --module-name main \
             -o build/apk \
+            --split-per-abi \
+            --cleanup-packages \
+            --cleanup-app \
             --yes \
             --no-rich-output \
             -vv
@@ -56,12 +59,13 @@ jobs:
       - name: List Generated Build Files
         if: always()
         run: |
-          find build -type f -name "*.apk" || true
+          ls -lh build/apk/ || true
+          find build -type f -name "*.apk" -exec ls -lh {} + || true
 
-      - name: Upload APK Artifact
+      - name: Upload APK Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: Quick-Vendor-Invoice-APK
+          name: Quick-Vendor-Invoice-APKs
           path: |
             build/apk/*.apk
             build/apk/**/*.apk
