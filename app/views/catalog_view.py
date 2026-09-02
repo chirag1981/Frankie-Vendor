@@ -111,7 +111,7 @@ def create_catalog_view(page: ft.Page, on_catalog_changed: Callable = None) -> f
         if not items:
             catalog_items_column.controls.append(
                 ft.Container(
-                    alignment=ft.alignment.center,
+                    alignment=ft.Alignment(0, 0),
                     padding=30,
                     content=ft.Text("No menu items yet. Click '+ Add Item' to start!", color=ft.Colors.GREY_500)
                 )

@@ -136,7 +136,7 @@ def create_history_view(page: ft.Page) -> ft.Control:
         if not invoices:
             invoices_list_column.controls.append(
                 ft.Container(
-                    alignment=ft.alignment.center,
+                    alignment=ft.Alignment(0, 0),
                     padding=20,
                     content=ft.Column(
                         horizontal_alignment=ft.CrossAxisAlignment.CENTER,

@@ -33,14 +33,16 @@ class ItemRowControl(ft.Container):
             expand=True,
             capitalization=ft.TextCapitalization.CHARACTERS,
             border_radius=8,
+            text_size=14,
             on_change=lambda e: self._on_change()
         )
 
         self.qty_field = ft.TextField(
             value=str(int(qty) if float(qty).is_integer() else qty),
             keyboard_type=ft.KeyboardType.NUMBER,
-            width=55,
+            width=50,
             dense=True,
+            text_size=14,
             text_align=ft.TextAlign.CENTER,
             border_radius=8,
             on_change=lambda e: self._on_change()
@@ -49,8 +51,9 @@ class ItemRowControl(ft.Container):
         self.price_field = ft.TextField(
             value=f"{price:.0f}" if float(price).is_integer() else f"{price:.2f}",
             keyboard_type=ft.KeyboardType.NUMBER,
-            width=70,
+            width=65,
             dense=True,
+            text_size=14,
             text_align=ft.TextAlign.RIGHT,
             border_radius=8,
             on_change=lambda e: self._on_change()
@@ -58,23 +61,23 @@ class ItemRowControl(ft.Container):
 
         self.line_total_text = ft.Text(
             "₹0.00",
-            size=14,
+            size=15,
             weight=ft.FontWeight.BOLD,
-            width=75,
+            width=80,
             text_align=ft.TextAlign.RIGHT,
             color=ft.Colors.PRIMARY
         )
 
         self.minus_btn = ft.IconButton(
             icon=ft.Icons.REMOVE_CIRCLE_OUTLINE,
-            icon_size=18,
+            icon_size=20,
             tooltip="Decrease Qty",
             on_click=self._decrease_qty
         )
 
         self.plus_btn = ft.IconButton(
             icon=ft.Icons.ADD_CIRCLE_OUTLINE,
-            icon_size=18,
+            icon_size=20,
             tooltip="Increase Qty",
             on_click=self._increase_qty
         )
@@ -91,9 +94,9 @@ class ItemRowControl(ft.Container):
             elevation=1,
             shape=ft.RoundedRectangleBorder(radius=10),
             content=ft.Container(
-                padding=8,
+                padding=10,
                 content=ft.Column(
-                    spacing=6,
+                    spacing=8,
                     controls=[
                         ft.Row(
                             controls=[
@@ -105,9 +108,10 @@ class ItemRowControl(ft.Container):
                         ft.Row(
                             controls=[
                                 ft.Row([self.minus_btn, self.qty_field, self.plus_btn], spacing=0),
-                                ft.Text("×", size=14, color=ft.Colors.GREY_600),
-                                self.price_field,
-                                ft.Text("=", size=14, color=ft.Colors.GREY_600),
+                                ft.Row([
+                                    ft.Text("₹", size=13, color=ft.Colors.GREY_600),
+                                    self.price_field
+                                ], spacing=2),
                                 self.line_total_text
                             ],
                             alignment=ft.MainAxisAlignment.SPACE_BETWEEN
@@ -123,7 +127,10 @@ class ItemRowControl(ft.Container):
             val = float(self.qty_field.value or 1)
             if val > 1:
                 self.qty_field.value = str(int(val - 1) if (val - 1).is_integer() else (val - 1))
-                self.qty_field.update()
+                try:
+                    self.qty_field.update()
+                except Exception:
+                    pass
                 self._on_change()
         except ValueError:
             pass
@@ -132,7 +139,10 @@ class ItemRowControl(ft.Container):
         try:
             val = float(self.qty_field.value or 0)
             self.qty_field.value = str(int(val + 1) if (val + 1).is_integer() else (val + 1))
-            self.qty_field.update()
+            try:
+                self.qty_field.update()
+            except Exception:
+                pass
             self._on_change()
         except ValueError:
             pass
@@ -176,55 +186,70 @@ def create_billing_view(page: ft.Page, on_invoice_created: Callable = None) -> f
     # Header / Invoice Info
     inv_number_text = ft.Text(
         f"Invoice: {database.get_next_invoice_number()}",
-        size=15,
+        size=14,
         weight=ft.FontWeight.BOLD,
         color=ft.Colors.PRIMARY
     )
     date_text = ft.Text(
         datetime.now().strftime("%d-%b-%Y %I:%M %p"),
-        size=12,
+        size=11,
         color=ft.Colors.GREY_600
     )
 
-    # Customer inputs
+    # Customer inputs (stacked cleanly in a column so no clipping occurs on mobile)
     cust_name_field = ft.TextField(
         label="Customer Name (Optional)",
         prefix_icon=ft.Icons.PERSON_OUTLINE,
         dense=True,
         border_radius=8,
-        capitalization=ft.TextCapitalization.CHARACTERS,
-        expand=True
+        capitalization=ft.TextCapitalization.CHARACTERS
     )
     cust_phone_field = ft.TextField(
-        label="Phone (for WhatsApp Bill)",
+        label="Phone Number (for WhatsApp Bill)",
         prefix_icon=ft.Icons.PHONE_ANDROID,
         keyboard_type=ft.KeyboardType.PHONE,
         dense=True,
-        border_radius=8,
-        expand=True
+        border_radius=8
     )
 
     # Item Rows Column
     items_column = ft.Column(spacing=8)
 
+    # Empty state placeholder when no items added yet
+    empty_items_placeholder = ft.Container(
+        padding=16,
+        alignment=ft.Alignment(0, 0),
+        content=ft.Column(
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            spacing=4,
+            controls=[
+                ft.Icon(ft.Icons.TOUCH_APP_OUTLINED, color=ft.Colors.PRIMARY, size=28),
+                ft.Text("No items added yet.", size=13, weight=ft.FontWeight.W_500),
+                ft.Text("Tap any menu item above or click '+ Custom Item'", size=11, color=ft.Colors.GREY_600)
+            ]
+        )
+    )
+
+    items_container = ft.Column(controls=[empty_items_placeholder], spacing=8)
+
     # Quick Menu Catalog items chips
     quick_menu_row = ft.Row(wrap=True, spacing=6)
 
     # Totals Display
-    subtotal_text = ft.Text("₹0.00", size=14, weight=ft.FontWeight.W_500)
+    subtotal_text = ft.Text("₹0.00", size=15, weight=ft.FontWeight.W_600)
     discount_field = ft.TextField(
         value="0",
         label="Discount (₹)",
         keyboard_type=ft.KeyboardType.NUMBER,
         dense=True,
-        width=110,
+        expand=1,
         border_radius=8,
         on_change=lambda e: recalculate_totals()
     )
     payment_mode_dropdown = ft.Dropdown(
-        label="Payment",
+        label="Payment Mode",
         dense=True,
-        width=110,
+        expand=1,
         border_radius=8,
         value="Cash",
         options=[
@@ -240,6 +265,17 @@ def create_billing_view(page: ft.Page, on_invoice_created: Callable = None) -> f
         weight=ft.FontWeight.BOLD,
         color=ft.Colors.GREEN_600
     )
+
+    def sync_items_display():
+        """Updates the container to show empty placeholder or item cards."""
+        if not items_column.controls:
+            items_container.controls = [empty_items_placeholder]
+        else:
+            items_container.controls = [items_column]
+        try:
+            items_container.update()
+        except Exception:
+            pass
 
     def recalculate_totals():
         subtotal = 0.0
@@ -270,10 +306,11 @@ def create_billing_view(page: ft.Page, on_invoice_created: Callable = None) -> f
                 items_column.update()
             except Exception:
                 pass
+            sync_items_display()
             recalculate_totals()
 
     def add_item_row(name: str = "", qty: float = 1.0, price: float = 0.0):
-        # Check if item with exact name already exists, if so just increase qty!
+        # If item already in list, simply increment quantity
         if name:
             for ctrl in items_column.controls:
                 if isinstance(ctrl, ItemRowControl) and ctrl.name_field.value.strip().upper() == name.strip().upper():
@@ -297,6 +334,7 @@ def create_billing_view(page: ft.Page, on_invoice_created: Callable = None) -> f
             on_delete_callback=remove_item_row
         )
         items_column.controls.append(row)
+        sync_items_display()
         try:
             items_column.update()
         except Exception:
@@ -322,14 +360,17 @@ def create_billing_view(page: ft.Page, on_invoice_created: Callable = None) -> f
 
     def reset_bill():
         items_column.controls.clear()
-        add_item_row()  # add 1 empty row
+        sync_items_display()
         cust_name_field.value = ""
         cust_phone_field.value = ""
         discount_field.value = "0"
         payment_mode_dropdown.value = "Cash"
         inv_number_text.value = f"Invoice: {database.get_next_invoice_number()}"
         date_text.value = datetime.now().strftime("%d-%b-%Y %I:%M %p")
-        page.update()
+        try:
+            page.update()
+        except Exception:
+            pass
         recalculate_totals()
 
     def validate_and_collect_data():
@@ -341,7 +382,7 @@ def create_billing_view(page: ft.Page, on_invoice_created: Callable = None) -> f
                     items_data.append(data)
 
         if not items_data:
-            utils.show_snack_bar(page, "⚠️ Please add at least 1 item with name and price.")
+            utils.show_snack_bar(page, "⚠️ Please add at least 1 item to the bill.")
             return None, None
 
         try:
@@ -405,8 +446,7 @@ def create_billing_view(page: ft.Page, on_invoice_created: Callable = None) -> f
 
         reset_bill()
 
-    # Initialize with 1 empty item row & load quick menu
-    add_item_row()
+    # Load initial menu catalog (starts without any blank items)
     load_quick_menu()
 
     # Main Billing View UI Container
@@ -421,25 +461,20 @@ def create_billing_view(page: ft.Page, on_invoice_created: Callable = None) -> f
                     elevation=2,
                     content=ft.Container(
                         padding=12,
-                        content=ft.Column(
-                            spacing=4,
+                        content=ft.Row(
                             controls=[
-                                ft.Row(
-                                    controls=[
-                                        ft.Column([
-                                            ft.Text(shop_settings.get("shop_name", "MY SHOP"), size=18, weight=ft.FontWeight.BOLD),
-                                            date_text,
-                                        ]),
-                                        ft.Container(
-                                            content=inv_number_text,
-                                            padding=6,
-                                            border_radius=8,
-                                            bgcolor=ft.Colors.BLUE_50
-                                        )
-                                    ],
-                                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN
+                                ft.Column([
+                                    ft.Text(shop_settings.get("shop_name", "MY SHOP"), size=17, weight=ft.FontWeight.BOLD),
+                                    date_text,
+                                ], spacing=2),
+                                ft.Container(
+                                    content=inv_number_text,
+                                    padding=ft.Padding(8, 4, 8, 4),
+                                    border_radius=8,
+                                    bgcolor=ft.Colors.BLUE_50
                                 )
-                            ]
+                            ],
+                            alignment=ft.MainAxisAlignment.SPACE_BETWEEN
                         )
                     )
                 ),
@@ -458,19 +493,19 @@ def create_billing_view(page: ft.Page, on_invoice_created: Callable = None) -> f
                     ]
                 ),
 
-                # Customer Details Card
-                ft.Card(
-                    elevation=1,
-                    content=ft.Container(
-                        padding=10,
-                        content=ft.Column(
-                            spacing=8,
-                            controls=[
-                                ft.Text("Customer Details (Optional)", size=12, weight=ft.FontWeight.BOLD, color=ft.Colors.GREY_700),
-                                ft.Row([cust_name_field, cust_phone_field], spacing=8)
-                            ]
+                # Customer Details (Collapsible / Clean)
+                ft.ExpansionTile(
+                    title=ft.Text("👤 Customer Details (Optional)", size=13, weight=ft.FontWeight.W_600),
+                    leading=ft.Icon(ft.Icons.PERSON_OUTLINE, color=ft.Colors.BLUE_500),
+                    controls=[
+                        ft.Container(
+                            padding=10,
+                            content=ft.Column(
+                                spacing=8,
+                                controls=[cust_name_field, cust_phone_field]
+                            )
                         )
-                    )
+                    ]
                 ),
 
                 # Line Items Section Header
@@ -478,7 +513,7 @@ def create_billing_view(page: ft.Page, on_invoice_created: Callable = None) -> f
                     controls=[
                         ft.Text("Invoice Items", size=15, weight=ft.FontWeight.BOLD),
                         ft.FilledButton(
-                            "Add Custom Item",
+                            "+ Custom Item",
                             icon=ft.Icons.ADD,
                             style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8)),
                             on_click=lambda e: add_item_row()
@@ -487,12 +522,12 @@ def create_billing_view(page: ft.Page, on_invoice_created: Callable = None) -> f
                     alignment=ft.MainAxisAlignment.SPACE_BETWEEN
                 ),
 
-                # Dynamic Items List
-                items_column,
+                # Dynamic Items List or Empty Placeholder
+                items_container,
 
                 # Billing Summary Card
                 ft.Card(
-                    elevation=3,
+                    elevation=2,
                     bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
                     content=ft.Container(
                         padding=14,
@@ -511,7 +546,7 @@ def create_billing_view(page: ft.Page, on_invoice_created: Callable = None) -> f
                                         discount_field,
                                         payment_mode_dropdown
                                     ],
-                                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN
+                                    spacing=10
                                 ),
                                 ft.Divider(thickness=1),
                                 ft.Row(
@@ -559,7 +594,7 @@ def create_billing_view(page: ft.Page, on_invoice_created: Callable = None) -> f
                                 ),
                                 ft.IconButton(
                                     icon=ft.Icons.REFRESH,
-                                    tooltip="Reset Bill",
+                                    tooltip="Clear Bill",
                                     on_click=lambda e: reset_bill()
                                 )
                             ],
@@ -568,7 +603,7 @@ def create_billing_view(page: ft.Page, on_invoice_created: Callable = None) -> f
                     ]
                 ),
 
-                ft.Container(height=20)  # bottom padding for mobile navigation bar
+                ft.Container(height=25)
             ]
         )
     )
