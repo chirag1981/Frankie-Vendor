@@ -25,8 +25,10 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Accept Android Licenses
-        run: yes | flutter doctor --android-licenses || true
+      - name: Accept Android SDK Licenses
+        run: |
+          yes | flutter doctor --android-licenses || true
+          flutter doctor -v
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -39,14 +41,17 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Verify Environment
-        run: |
-          flutter doctor -v
-          flet --version
-
       - name: Build Android APK
         run: |
-          flet build apk --project "QuickVendorInvoice" --product "Quick Vendor Invoice" --org "com.vendor.invoice" -vv
+          python -m flet_cli.cli build apk . \
+            --project "QuickVendorInvoice" \
+            --product "Quick Vendor Invoice" \
+            --org "com.vendor.invoice" \
+            --module-name main \
+            -o build/apk \
+            --yes \
+            --no-rich-output \
+            -vv
 
       - name: Locate & Upload APK Artifact
         uses: actions/upload-artifact@v4
@@ -54,5 +59,6 @@ jobs:
           name: Quick-Vendor-Invoice-APK
           path: |
             build/apk/*.apk
+            build/apk/**/*.apk
             build/app/outputs/flutter-apk/*.apk
           if-no-files-found: warn
