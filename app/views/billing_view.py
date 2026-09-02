@@ -430,11 +430,11 @@ def create_billing_view(page: ft.Page, on_invoice_created: Callable = None) -> f
             utils.copy_to_clipboard(page, wa_text)
             utils.show_snack_bar(page, "📋 Bill copied to clipboard! You can paste anywhere.")
 
-        def on_share_pdf_click(e):
+        def on_open_pdf_click(e):
             if pdf_path and os.path.exists(pdf_path):
-                utils.share_pdf_file(page, pdf_path, message=f"Invoice #{inv_data['invoice_number']} from {current_shop.get('shop_name', '')}")
+                utils.open_or_save_pdf(page, pdf_path)
             else:
-                utils.show_snack_bar(page, "📄 PDF ready in Downloads/VendorInvoices.")
+                utils.show_snack_bar(page, "📄 PDF saved in Downloads/VendorInvoices.")
 
         dialog = ft.AlertDialog(
             title=ft.Row([
@@ -488,7 +488,7 @@ def create_billing_view(page: ft.Page, on_invoice_created: Callable = None) -> f
             ),
             actions=[
                 ft.FilledButton("WhatsApp", icon=ft.Icons.SEND, url=wa_url, style=ft.ButtonStyle(bgcolor=ft.Colors.GREEN_600), on_click=on_whatsapp_click),
-                ft.FilledTonalButton("Share PDF", icon=ft.Icons.PICTURE_AS_PDF, on_click=on_share_pdf_click),
+                ft.FilledTonalButton("Open PDF", icon=ft.Icons.PICTURE_AS_PDF, on_click=on_open_pdf_click),
                 ft.OutlinedButton("Copy Text", icon=ft.Icons.COPY, on_click=on_copy_click),
                 ft.TextButton("New Bill", on_click=lambda e: utils.close_dialog(page, dialog))
             ],

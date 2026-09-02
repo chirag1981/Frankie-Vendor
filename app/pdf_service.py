@@ -31,14 +31,19 @@ class ModernInvoicePDF(FPDF):
 
 def get_pdf_output_dir() -> str:
     """Returns the best storage directory for PDFs across Android and Desktop."""
-    # Check if Android Public Downloads is available
-    android_public_downloads = "/storage/emulated/0/Download/VendorInvoices"
-    try:
-        if os.path.exists("/storage/emulated/0/Download"):
-            os.makedirs(android_public_downloads, exist_ok=True)
-            return android_public_downloads
-    except Exception:
-        pass
+    candidate_paths = [
+        "/storage/emulated/0/Download/VendorInvoices",
+        "/storage/emulated/0/Documents/VendorInvoices",
+        "/sdcard/Download/VendorInvoices",
+    ]
+    for p in candidate_paths:
+        try:
+            parent = os.path.dirname(p)
+            if os.path.exists(parent):
+                os.makedirs(p, exist_ok=True)
+                return p
+        except Exception:
+            continue
 
     # App-specific local fallback
     local_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "invoices_pdf")

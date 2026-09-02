@@ -118,56 +118,27 @@ def open_url(page: Any, url: str) -> None:
             pass
 
 
-def share_pdf_file(page: Any, pdf_path: str, message: str = "") -> None:
-    """Shares the actual PDF file directly on Android/iOS, or opens in viewer on Web/Desktop."""
+def open_or_save_pdf(page: Any, pdf_path: str) -> None:
+    """Opens and confirms the saved PDF across Android, Web, and Desktop."""
     import webbrowser
+    import os
 
     if not pdf_path or not os.path.exists(pdf_path):
         show_snack_bar(page, "📄 PDF not found.")
         return
 
-    # 1. If running in Web Browser mode, do NOT instantiate mobile ft.Share (avoids red screen crash)
-    is_web = getattr(page, "web", False)
-    if is_web:
+    try:
+        if os.name == "nt":
+            os.startfile(os.path.abspath(pdf_path))
+        else:
+            webbrowser.open(f"file://{os.path.abspath(pdf_path)}")
+    except Exception:
         try:
             webbrowser.open(os.path.abspath(pdf_path))
         except Exception:
             pass
-        show_snack_bar(page, f"📄 PDF saved: {os.path.basename(pdf_path)}")
-        return
 
-    # 2. Native Mobile APK sharing service (Android / iOS)
-    import flet as ft
-    async def _async_share():
-        try:
-            share_service = ft.Share()
-            if hasattr(page, "overlay"):
-                page.overlay.append(share_service)
-                page.update()
-            await share_service.share_files(
-                [ft.ShareFile(pdf_path)],
-                text=message,
-                title="Invoice PDF"
-            )
-        except Exception as err:
-            try:
-                webbrowser.open(pdf_path)
-            except Exception:
-                pass
-
-    if hasattr(page, "run_task"):
-        try:
-            page.run_task(_async_share)
-            return
-        except Exception:
-            pass
-
-    # Desktop fallback
-    try:
-        webbrowser.open(pdf_path)
-    except Exception:
-        pass
-    show_snack_bar(page, f"📄 PDF saved: {os.path.basename(pdf_path)}")
+    show_snack_bar(page, f"✅ PDF Saved: {os.path.basename(pdf_path)} in Downloads/VendorInvoices")
 
 
 def copy_to_clipboard(page: Any, text: str) -> None:
