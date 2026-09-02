@@ -64,7 +64,7 @@ object WhatsAppFormatter {
 
         if (footerNote.isNotEmpty()) {
             lines.add("")
-            lines.add("✨ _$footerNote_")
+            lines.add("✨ _${footerNote}_")
         }
 
         return lines.joinToString("\n")
