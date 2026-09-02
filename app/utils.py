@@ -76,8 +76,7 @@ def generate_whatsapp_bill_text(
 
 def get_whatsapp_share_url(phone: str, message: str) -> str:
     """
-    Creates a direct WhatsApp app URL.
-    Uses 'whatsapp://send' scheme which directly triggers the WhatsApp Android App intent on mobile.
+    Creates a universal direct WhatsApp URL compatible with Android App, iOS, and Web.
     """
     clean_phone = "".join(filter(str.isdigit, phone or ""))
     # If phone is 10 digits (India), prefix 91
@@ -86,34 +85,31 @@ def get_whatsapp_share_url(phone: str, message: str) -> str:
 
     encoded_msg = urllib.parse.quote(message)
     if clean_phone:
-        return f"whatsapp://send?phone={clean_phone}&text={encoded_msg}"
-    return f"whatsapp://send?text={encoded_msg}"
+        return f"https://api.whatsapp.com/send?phone={clean_phone}&text={encoded_msg}"
+    return f"https://api.whatsapp.com/send?text={encoded_msg}"
 
 
 def open_url(page: Any, url: str) -> None:
     """Launches a URL seamlessly on Android (opens WhatsApp app) and Desktop/Web (opens browser)."""
     import webbrowser
-    # 1. Native Flet / Flutter client launcher (Triggers WhatsApp Intent on Android)
+    # 1. Native Flet / Flutter client launcher
     if hasattr(page, "launch_url"):
         try:
-            page.launch_url(url)
+            page.launch_url(url, web_popup_window_name="_blank")
         except Exception:
             try:
-                page.launch_url(url, web_popup_window_name="_blank")
+                page.launch_url(url)
             except Exception:
                 pass
 
-    # 2. Web browser fallback for desktop testing
-    web_url = url
-    if url.startswith("whatsapp://send?phone="):
-        web_url = url.replace("whatsapp://send?phone=", "https://wa.me/").replace("&text=", "?text=")
-    elif url.startswith("whatsapp://send?text="):
-        web_url = url.replace("whatsapp://send?text=", "https://api.whatsapp.com/send?text=")
-
+    # 2. Desktop OS browser fallback
     try:
-        webbrowser.open(web_url)
+        webbrowser.open_new_tab(url)
     except Exception:
-        pass
+        try:
+            webbrowser.open(url)
+        except Exception:
+            pass
 
 
 def copy_to_clipboard(page: Any, text: str) -> None:

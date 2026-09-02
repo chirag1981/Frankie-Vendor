@@ -122,7 +122,7 @@ def create_history_view(page: ft.Page) -> ft.Control:
                 )
             ),
             actions=[
-                ft.FilledButton("WhatsApp", icon=ft.Icons.SEND, style=ft.ButtonStyle(bgcolor=ft.Colors.GREEN_600), on_click=reshare_wa),
+                ft.FilledButton("WhatsApp", icon=ft.Icons.SEND, url=wa_url, style=ft.ButtonStyle(bgcolor=ft.Colors.GREEN_600), on_click=reshare_wa),
                 ft.OutlinedButton("Copy Text", icon=ft.Icons.COPY, on_click=copy_text),
                 ft.IconButton(icon=ft.Icons.PICTURE_AS_PDF, tooltip="Save PDF", on_click=reprint_pdf),
                 ft.IconButton(icon=ft.Icons.DELETE_OUTLINE, tooltip="Delete Invoice", icon_color=ft.Colors.RED_400, on_click=confirm_delete_inv),

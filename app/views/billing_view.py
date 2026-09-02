@@ -481,7 +481,7 @@ def create_billing_view(page: ft.Page, on_invoice_created: Callable = None) -> f
                 )
             ),
             actions=[
-                ft.FilledButton("WhatsApp", icon=ft.Icons.SEND, style=ft.ButtonStyle(bgcolor=ft.Colors.GREEN_600), on_click=on_whatsapp_click),
+                ft.FilledButton("WhatsApp", icon=ft.Icons.SEND, url=wa_url, style=ft.ButtonStyle(bgcolor=ft.Colors.GREEN_600), on_click=on_whatsapp_click),
                 ft.OutlinedButton("Copy Text", icon=ft.Icons.COPY, on_click=on_copy_click),
                 ft.TextButton("New Bill", on_click=lambda e: utils.close_dialog(page, dialog))
             ],
