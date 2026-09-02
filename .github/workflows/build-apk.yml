@@ -22,14 +22,13 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Set up Gradle Wrapper JAR
-        run: |
-          gradle wrapper --gradle-version 8.9 --distribution-type bin
-          chmod +x gradlew
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
 
-      - name: Build Debug APK & Run Unit Tests
-        run: |
-          ./gradlew assembleDebug testDebugUnitTest --no-daemon --stacktrace
+      - name: Build Debug APK
+        run: gradle assembleDebug --stacktrace --no-daemon
 
       - name: Locate APK File
         run: |

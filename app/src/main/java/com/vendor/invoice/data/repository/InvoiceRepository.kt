@@ -115,7 +115,9 @@ class InvoiceRepository(private val database: AppDatabase) {
             )
         }
 
-        val invoiceId = invoiceDao.insertInvoiceWithItems(invoice, invoiceItems)
+        val invoiceId = invoiceDao.insertInvoice(invoice)
+        val linkedItems = invoiceItems.map { it.copy(invoiceId = invoiceId) }
+        invoiceDao.insertInvoiceItems(linkedItems)
         return Pair(invoiceId, invoice.copy(id = invoiceId))
     }
 
