@@ -11,16 +11,16 @@ import com.vendor.invoice.domain.model.InvoiceWithItems
 import kotlinx.coroutines.flow.Flow
 
 @Dao
-interface InvoiceDao {
+abstract class InvoiceDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertInvoice(invoice: InvoiceEntity): Long
+    abstract suspend fun insertInvoice(invoice: InvoiceEntity): Long
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertInvoiceItems(items: List<InvoiceItemEntity>)
+    abstract suspend fun insertInvoiceItems(items: List<InvoiceItemEntity>)
 
     @Transaction
-    suspend fun insertInvoiceWithItems(invoice: InvoiceEntity, items: List<InvoiceItemEntity>): Long {
+    open suspend fun insertInvoiceWithItems(invoice: InvoiceEntity, items: List<InvoiceItemEntity>): Long {
         val invoiceId = insertInvoice(invoice)
         val linkedItems = items.map { it.copy(invoiceId = invoiceId) }
         insertInvoiceItems(linkedItems)
@@ -28,7 +28,7 @@ interface InvoiceDao {
     }
 
     @Query("SELECT * FROM invoices ORDER BY id DESC")
-    fun getAllInvoicesFlow(): Flow<List<InvoiceEntity>>
+    abstract fun getAllInvoicesFlow(): Flow<List<InvoiceEntity>>
 
     @Query("""
         SELECT * FROM invoices 
@@ -37,33 +37,33 @@ interface InvoiceDao {
            OR customer_phone LIKE '%' || :query || '%' 
         ORDER BY id DESC
     """)
-    fun searchInvoicesFlow(query: String): Flow<List<InvoiceEntity>>
+    abstract fun searchInvoicesFlow(query: String): Flow<List<InvoiceEntity>>
 
     @Transaction
     @Query("SELECT * FROM invoices WHERE id = :invoiceId LIMIT 1")
-    suspend fun getInvoiceWithItemsById(invoiceId: Long): InvoiceWithItems?
+    abstract suspend fun getInvoiceWithItemsById(invoiceId: Long): InvoiceWithItems?
 
     @Query("SELECT * FROM invoice_items WHERE invoice_id = :invoiceId ORDER BY id ASC")
-    suspend fun getInvoiceItems(invoiceId: Long): List<InvoiceItemEntity>
+    abstract suspend fun getInvoiceItems(invoiceId: Long): List<InvoiceItemEntity>
 
     @Query("SELECT COUNT(*) FROM invoice_items WHERE invoice_id = :invoiceId")
-    suspend fun getInvoiceItemsCount(invoiceId: Long): Int
+    abstract suspend fun getInvoiceItemsCount(invoiceId: Long): Int
 
     @Query("SELECT id FROM invoices ORDER BY id DESC LIMIT 1")
-    suspend fun getLastInvoiceId(): Long?
+    abstract suspend fun getLastInvoiceId(): Long?
 
     @Query("DELETE FROM invoices WHERE id = :invoiceId")
-    suspend fun deleteInvoice(invoiceId: Long)
+    abstract suspend fun deleteInvoice(invoiceId: Long)
 
     @Query("SELECT COUNT(*) FROM invoices")
-    fun getTotalBillsCountFlow(): Flow<Int>
+    abstract fun getTotalBillsCountFlow(): Flow<Int>
 
     @Query("SELECT COALESCE(SUM(grand_total), 0.0) FROM invoices")
-    fun getTotalSalesFlow(): Flow<Double>
+    abstract fun getTotalSalesFlow(): Flow<Double>
 
     @Query("SELECT COUNT(*) FROM invoices WHERE DATE(created_at) = DATE('now', 'localtime')")
-    fun getTodayBillsCountFlow(): Flow<Int>
+    abstract fun getTodayBillsCountFlow(): Flow<Int>
 
     @Query("SELECT COALESCE(SUM(grand_total), 0.0) FROM invoices WHERE DATE(created_at) = DATE('now', 'localtime')")
-    fun getTodaySalesFlow(): Flow<Double>
+    abstract fun getTodaySalesFlow(): Flow<Double>
 }
