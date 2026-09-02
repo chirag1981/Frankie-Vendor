@@ -90,19 +90,40 @@ def get_whatsapp_share_url(phone: str, message: str) -> str:
 
 
 def open_url(page: Any, url: str) -> None:
-    """Launches a URL seamlessly on Android (opens WhatsApp app) and Desktop/Web (opens browser)."""
+    """Launches a URL seamlessly on Android (opens WhatsApp app directly) and Desktop/Web (opens browser)."""
     import webbrowser
-    # 1. Native Flet / Flutter client launcher
+    import flet as ft
+
+    # 1. Primary: Flet UrlLauncher Service with EXTERNAL_APPLICATION mode for Android/iOS
+    if hasattr(page, "overlay"):
+        launcher = None
+        for ctrl in getattr(page, "overlay", []):
+            if isinstance(ctrl, ft.UrlLauncher):
+                launcher = ctrl
+                break
+        if not launcher:
+            launcher = ft.UrlLauncher()
+            page.overlay.append(launcher)
+            page.update()
+        try:
+            launcher.launch_url(url, mode=ft.LaunchMode.EXTERNAL_APPLICATION)
+            return
+        except Exception as err:
+            print(f"[UrlLauncher Warning]: {err}")
+
+    # 2. Secondary: Native Page.launch_url
     if hasattr(page, "launch_url"):
         try:
             page.launch_url(url, web_popup_window_name="_blank")
+            return
         except Exception:
             try:
                 page.launch_url(url)
+                return
             except Exception:
                 pass
 
-    # 2. Desktop OS browser fallback
+    # 3. Desktop OS browser fallback
     try:
         webbrowser.open_new_tab(url)
     except Exception:
