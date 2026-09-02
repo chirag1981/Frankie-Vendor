@@ -90,7 +90,7 @@ def init_db() -> None:
                 "FRANKIE CORNER",
                 "9876543210",
                 "Food Street, Market Road",
-                "shopkeeper@upi",
+                "",
                 "₹",
                 0.0,
                 "Fresh & Delicious! Visit Again!"

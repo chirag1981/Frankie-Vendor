@@ -24,14 +24,13 @@ class TestVendorInvoiceApp(unittest.TestCase):
             shop_name="TEST FRANKIE HUB",
             phone="9988776655",
             address="Near College Cross",
-            upi_id="test@upi",
+            upi_id="",
             currency="₹",
             footer_note="Visit us again!"
         )
         settings = database.get_shop_settings()
         self.assertEqual(settings["shop_name"], "TEST FRANKIE HUB")
         self.assertEqual(settings["phone"], "9988776655")
-        self.assertEqual(settings["upi_id"], "test@upi")
 
     def test_catalog_crud(self):
         # Add item

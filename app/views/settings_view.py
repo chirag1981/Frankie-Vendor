@@ -40,15 +40,6 @@ def create_settings_view(page: ft.Page, on_settings_saved: Callable = None) -> f
         border_radius=8
     )
 
-    upi_id_field = ft.TextField(
-        label="UPI ID (for Customer QR / Payment)",
-        value=current_settings.get("upi_id", ""),
-        prefix_icon=ft.Icons.PAYMENT,
-        hint_text="e.g. mobile@upi or vendor@okicici",
-        dense=True,
-        border_radius=8
-    )
-
     currency_field = ft.TextField(
         label="Currency Symbol",
         value=current_settings.get("currency", "₹"),
@@ -77,7 +68,7 @@ def create_settings_view(page: ft.Page, on_settings_saved: Callable = None) -> f
             shop_name=name,
             phone=phone_field.value.strip(),
             address=address_field.value.strip(),
-            upi_id=upi_id_field.value.strip(),
+            upi_id="",
             currency=currency_field.value.strip() or "₹",
             footer_note=footer_note_field.value.strip()
         )
@@ -88,7 +79,7 @@ def create_settings_view(page: ft.Page, on_settings_saved: Callable = None) -> f
             on_settings_saved()
 
     return ft.Container(
-        padding=ft.Padding(12, 8, 12, 8),
+        padding=ft.Padding(14, 12, 14, 24),
         content=ft.Column(
             scroll=ft.ScrollMode.AUTO,
             spacing=12,
@@ -106,7 +97,6 @@ def create_settings_view(page: ft.Page, on_settings_saved: Callable = None) -> f
                                 shop_name_field,
                                 phone_field,
                                 address_field,
-                                upi_id_field,
                                 currency_field,
                                 footer_note_field
                             ]

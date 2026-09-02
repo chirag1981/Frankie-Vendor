@@ -26,7 +26,6 @@ def generate_whatsapp_bill_text(
     """
     shop_name = shop_settings.get("shop_name", "OUR SHOP").upper()
     phone = shop_settings.get("phone", "")
-    upi_id = shop_settings.get("upi_id", "")
     footer_note = shop_settings.get("footer_note", "Thank you for visiting!").strip()
     currency = shop_settings.get("currency", "₹")
 
@@ -67,10 +66,6 @@ def generate_whatsapp_bill_text(
         lines.append(f"Discount: -{currency}{discount:.2f}")
     lines.append(f"💰 *TOTAL AMOUNT: {currency}{grand_total:.2f}*")
     lines.append(f"💳 Payment Mode: {payment_mode}")
-
-    if upi_id:
-        lines.append("")
-        lines.append(f"📲 *Pay via UPI:* `{upi_id}`")
 
     if footer_note:
         lines.append("")

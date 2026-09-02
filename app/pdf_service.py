@@ -172,12 +172,6 @@ def generate_pdf_invoice(
     pdf.cell(23, 7, f"{currency} {grand_total:.2f}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align="R")
 
     pdf.ln(4)
-    # --- Payment / QR info ---
-    if shop_settings.get("upi_id"):
-        pdf.set_font("Helvetica", "B", 8)
-        pdf.set_text_color(79, 70, 229)
-        pdf.cell(0, 4, f"UPI ID for Payment: {shop_settings['upi_id']}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align="C")
-
     # --- Footer Note ---
     if shop_settings.get("footer_note"):
         pdf.set_font("Helvetica", "I", 8)
