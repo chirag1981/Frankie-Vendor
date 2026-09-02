@@ -68,10 +68,6 @@ def create_history_view(page: ft.Page) -> ft.Control:
             utils.copy_to_clipboard(page, wa_text)
             utils.show_snack_bar(page, "📋 Bill copied to clipboard! You can paste anywhere.")
 
-        def open_pdf(e):
-            pdf_path = pdf_service.generate_pdf_invoice(current_shop, full_inv, full_inv.get("items", []))
-            utils.open_or_save_pdf(page, pdf_path)
-
         def confirm_delete_inv(e):
             database.delete_invoice(inv_id)
             utils.close_dialog(page, dialog)
@@ -121,7 +117,6 @@ def create_history_view(page: ft.Page) -> ft.Control:
             ),
             actions=[
                 ft.FilledButton("WhatsApp", icon=ft.Icons.SEND, url=wa_url, style=ft.ButtonStyle(bgcolor=ft.Colors.GREEN_600), on_click=reshare_wa),
-                ft.FilledTonalButton("Open PDF", icon=ft.Icons.PICTURE_AS_PDF, on_click=open_pdf),
                 ft.OutlinedButton("Copy Text", icon=ft.Icons.COPY, on_click=copy_text),
                 ft.IconButton(icon=ft.Icons.DELETE_OUTLINE, tooltip="Delete Invoice", icon_color=ft.Colors.RED_400, on_click=confirm_delete_inv),
                 ft.TextButton("Close", on_click=lambda e: utils.close_dialog(page, dialog))

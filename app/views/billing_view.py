@@ -430,12 +430,6 @@ def create_billing_view(page: ft.Page, on_invoice_created: Callable = None) -> f
             utils.copy_to_clipboard(page, wa_text)
             utils.show_snack_bar(page, "📋 Bill copied to clipboard! You can paste anywhere.")
 
-        def on_open_pdf_click(e):
-            nonlocal pdf_path
-            if not pdf_path or not os.path.exists(pdf_path):
-                pdf_path = pdf_service.generate_pdf_invoice(current_shop, inv_data, items_data)
-            utils.open_or_save_pdf(page, pdf_path)
-
         dialog = ft.AlertDialog(
             title=ft.Row([
                 ft.Text(f"Invoice {inv_data['invoice_number']}", weight=ft.FontWeight.BOLD, size=16),
@@ -488,7 +482,6 @@ def create_billing_view(page: ft.Page, on_invoice_created: Callable = None) -> f
             ),
             actions=[
                 ft.FilledButton("WhatsApp", icon=ft.Icons.SEND, url=wa_url, style=ft.ButtonStyle(bgcolor=ft.Colors.GREEN_600), on_click=on_whatsapp_click),
-                ft.FilledTonalButton("Open PDF", icon=ft.Icons.PICTURE_AS_PDF, on_click=on_open_pdf_click),
                 ft.OutlinedButton("Copy Text", icon=ft.Icons.COPY, on_click=on_copy_click),
                 ft.TextButton("New Bill", on_click=lambda e: utils.close_dialog(page, dialog))
             ],
@@ -520,9 +513,6 @@ def create_billing_view(page: ft.Page, on_invoice_created: Callable = None) -> f
             utils.open_url(page, wa_url)
             show_receipt_modal(inv_data, items_data, pdf_path)
             utils.show_snack_bar(page, "✅ Invoice saved & opening WhatsApp!")
-        elif action_type == "pdf":
-            show_receipt_modal(inv_data, items_data, pdf_path)
-            utils.open_or_save_pdf(page, pdf_path)
         else:
             show_receipt_modal(inv_data, items_data, pdf_path)
             utils.show_snack_bar(page, f"✅ Invoice #{inv_data['invoice_number']} saved successfully!")
@@ -664,18 +654,14 @@ def create_billing_view(page: ft.Page, on_invoice_created: Callable = None) -> f
                         ),
                         ft.Row(
                             controls=[
-                                ft.OutlinedButton(
-                                    "📄 Save & PDF",
-                                    icon=ft.Icons.PICTURE_AS_PDF,
-                                    expand=True,
-                                    style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=10)),
-                                    on_click=lambda e: handle_save_invoice("pdf")
-                                ),
                                 ft.FilledTonalButton(
-                                    "💾 Save Only",
+                                    "💾 Save Invoice",
                                     icon=ft.Icons.CHECK,
                                     expand=True,
-                                    style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=10)),
+                                    style=ft.ButtonStyle(
+                                        shape=ft.RoundedRectangleBorder(radius=10),
+                                        padding=ft.Padding(0, 12, 0, 12)
+                                    ),
                                     on_click=lambda e: handle_save_invoice("save")
                                 ),
                                 ft.IconButton(
