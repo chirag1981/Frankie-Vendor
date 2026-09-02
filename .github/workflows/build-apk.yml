@@ -13,28 +13,42 @@ jobs:
       - name: Checkout Source Code
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Set up Java JDK 17
+        uses: actions/setup-java@v4
         with:
-          python-version: '3.11'
+          distribution: 'temurin'
+          java-version: '17'
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.22.x'
           channel: 'stable'
+          cache: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
 
       - name: Install Python Dependencies & Flet
         run: |
           python -m pip install --upgrade pip
           pip install flet fpdf2
 
+      - name: Verify Environment
+        run: |
+          flutter doctor -v
+
       - name: Build Android APK
         run: |
-          flet build apk --project "QuickVendorInvoice" --product "Quick Vendor Invoice" --org "com.vendor.invoice"
+          flet build apk --project "QuickVendorInvoice" --product "Quick Vendor Invoice" --org "com.vendor.invoice" -v
 
-      - name: Upload APK Artifact
+      - name: Locate & Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: Quick-Vendor-Invoice-APK
-          path: build/apk/*.apk
+          path: |
+            build/apk/*.apk
+            build/app/outputs/flutter-apk/*.apk
+          if-no-files-found: warn
