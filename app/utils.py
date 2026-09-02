@@ -119,26 +119,75 @@ def open_url(page: Any, url: str) -> None:
 
 
 def open_or_save_pdf(page: Any, pdf_path: str) -> None:
-    """Opens and confirms the saved PDF across Android, Web, and Desktop."""
-    import webbrowser
+    """Opens and confirms the saved PDF across Android, Desktop (Windows/macOS/Linux), and Web."""
     import os
+    import sys
+    import subprocess
+    import webbrowser
+    import inspect
 
     if not pdf_path or not os.path.exists(pdf_path):
         show_snack_bar(page, "📄 PDF not found.")
         return
 
-    try:
-        if os.name == "nt":
-            os.startfile(os.path.abspath(pdf_path))
-        else:
-            webbrowser.open(f"file://{os.path.abspath(pdf_path)}")
-    except Exception:
+    abs_path = os.path.abspath(pdf_path)
+    file_uri = f"file:///{abs_path.replace(os.sep, '/')}" if os.name == "nt" else f"file://{abs_path}"
+
+    opened = False
+
+    # 1. Desktop native openers
+    if os.name == "nt":
         try:
-            webbrowser.open(os.path.abspath(pdf_path))
+            os.startfile(abs_path)
+            opened = True
+        except Exception:
+            try:
+                subprocess.Popen(f'start "" "{abs_path}"', shell=True)
+                opened = True
+            except Exception:
+                pass
+    elif sys.platform == "darwin":
+        try:
+            subprocess.Popen(["open", abs_path])
+            opened = True
+        except Exception:
+            pass
+    elif sys.platform.startswith("linux") and "ANDROID_ROOT" not in os.environ:
+        try:
+            subprocess.Popen(["xdg-open", abs_path])
+            opened = True
         except Exception:
             pass
 
-    show_snack_bar(page, f"✅ PDF Saved: {os.path.basename(pdf_path)} in Downloads/VendorInvoices")
+    # 2. Flet Page.launch_url (for Android APK, Flutter wrapper, or Web)
+    if hasattr(page, "launch_url"):
+        try:
+            async def _launch():
+                res = page.launch_url(file_uri, web_popup_window_name="_blank")
+                if inspect.isawaitable(res):
+                    await res
+            if hasattr(page, "run_task"):
+                page.run_task(_launch)
+            else:
+                page.launch_url(file_uri)
+            opened = True
+        except Exception:
+            pass
+
+    # 3. Webbrowser fallback
+    if not opened:
+        try:
+            webbrowser.open_new_tab(file_uri)
+            opened = True
+        except Exception:
+            try:
+                webbrowser.open(abs_path)
+                opened = True
+            except Exception:
+                pass
+
+    folder_name = os.path.basename(os.path.dirname(abs_path)) or "VendorInvoices"
+    show_snack_bar(page, f"✅ PDF Saved: {os.path.basename(abs_path)} in Downloads/{folder_name}")
 
 
 def copy_to_clipboard(page: Any, text: str) -> None:

@@ -431,10 +431,10 @@ def create_billing_view(page: ft.Page, on_invoice_created: Callable = None) -> f
             utils.show_snack_bar(page, "📋 Bill copied to clipboard! You can paste anywhere.")
 
         def on_open_pdf_click(e):
-            if pdf_path and os.path.exists(pdf_path):
-                utils.open_or_save_pdf(page, pdf_path)
-            else:
-                utils.show_snack_bar(page, "📄 PDF saved in Downloads/VendorInvoices.")
+            nonlocal pdf_path
+            if not pdf_path or not os.path.exists(pdf_path):
+                pdf_path = pdf_service.generate_pdf_invoice(current_shop, inv_data, items_data)
+            utils.open_or_save_pdf(page, pdf_path)
 
         dialog = ft.AlertDialog(
             title=ft.Row([
@@ -522,7 +522,7 @@ def create_billing_view(page: ft.Page, on_invoice_created: Callable = None) -> f
             utils.show_snack_bar(page, "✅ Invoice saved & opening WhatsApp!")
         elif action_type == "pdf":
             show_receipt_modal(inv_data, items_data, pdf_path)
-            utils.show_snack_bar(page, f"✅ PDF Saved: {os.path.basename(pdf_path)}")
+            utils.open_or_save_pdf(page, pdf_path)
         else:
             show_receipt_modal(inv_data, items_data, pdf_path)
             utils.show_snack_bar(page, f"✅ Invoice #{inv_data['invoice_number']} saved successfully!")

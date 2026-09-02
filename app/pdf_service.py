@@ -30,11 +30,16 @@ class ModernInvoicePDF(FPDF):
 
 
 def get_pdf_output_dir() -> str:
-    """Returns the best storage directory for PDFs across Android and Desktop."""
+    """Returns the best storage directory for PDFs across Android, Windows, and other OSes."""
     candidate_paths = [
+        # Desktop standard Downloads folder (Windows, macOS, Linux)
+        os.path.join(os.path.expanduser("~"), "Downloads", "VendorInvoices"),
+        # Android shared public storage
         "/storage/emulated/0/Download/VendorInvoices",
         "/storage/emulated/0/Documents/VendorInvoices",
         "/sdcard/Download/VendorInvoices",
+        # Desktop Documents fallback
+        os.path.join(os.path.expanduser("~"), "Documents", "VendorInvoices"),
     ]
     for p in candidate_paths:
         try:
