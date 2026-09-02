@@ -61,16 +61,18 @@ def create_history_view(page: ft.Page) -> ft.Control:
             wa_text = utils.generate_whatsapp_bill_text(current_shop, full_inv, full_inv["items"])
             wa_url = utils.get_whatsapp_share_url(full_inv["customer_phone"], wa_text)
             utils.open_url(page, wa_url)
+            utils.show_snack_bar(page, "💬 Opening WhatsApp...")
+
+        def copy_text(e):
+            current_shop = database.get_shop_settings()
+            wa_text = utils.generate_whatsapp_bill_text(current_shop, full_inv, full_inv["items"])
+            utils.copy_to_clipboard(page, wa_text)
+            utils.show_snack_bar(page, "📋 Bill copied to clipboard! You can paste anywhere.")
 
         def reprint_pdf(e):
             current_shop = database.get_shop_settings()
             pdf_path = pdf_service.generate_pdf_invoice(current_shop, full_inv, full_inv["items"])
-            utils.show_snack_bar(
-                page,
-                text=f"PDF Generated: {os.path.basename(pdf_path)}",
-                action="Open",
-                on_action=lambda e: os.startfile(pdf_path) if hasattr(os, "startfile") else None
-            )
+            utils.show_snack_bar(page, f"📄 PDF saved in Downloads: {os.path.basename(pdf_path)}")
 
         def confirm_delete_inv(e):
             database.delete_invoice(inv_id)
@@ -120,9 +122,10 @@ def create_history_view(page: ft.Page) -> ft.Control:
                 )
             ),
             actions=[
-                ft.TextButton("WhatsApp", icon=ft.Icons.SEND, on_click=reshare_wa),
-                ft.TextButton("PDF", icon=ft.Icons.PICTURE_AS_PDF, on_click=reprint_pdf),
-                ft.IconButton(icon=ft.Icons.DELETE_OUTLINE, icon_color=ft.Colors.RED_400, on_click=confirm_delete_inv),
+                ft.FilledButton("WhatsApp", icon=ft.Icons.SEND, style=ft.ButtonStyle(bgcolor=ft.Colors.GREEN_600), on_click=reshare_wa),
+                ft.OutlinedButton("Copy Text", icon=ft.Icons.COPY, on_click=copy_text),
+                ft.IconButton(icon=ft.Icons.PICTURE_AS_PDF, tooltip="Save PDF", on_click=reprint_pdf),
+                ft.IconButton(icon=ft.Icons.DELETE_OUTLINE, tooltip="Delete Invoice", icon_color=ft.Colors.RED_400, on_click=confirm_delete_inv),
                 ft.TextButton("Close", on_click=lambda e: utils.close_dialog(page, dialog))
             ],
             actions_alignment=ft.MainAxisAlignment.END

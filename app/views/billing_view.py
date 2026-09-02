@@ -406,6 +406,91 @@ def create_billing_view(page: ft.Page, on_invoice_created: Callable = None) -> f
         }
         return inv_data, items_data
 
+    def show_receipt_modal(inv_data: Dict[str, Any], items_data: List[Dict[str, Any]], pdf_path: str = ""):
+        current_shop = database.get_shop_settings()
+        wa_text = utils.generate_whatsapp_bill_text(current_shop, inv_data, items_data)
+        wa_url = utils.get_whatsapp_share_url(inv_data["customer_phone"], wa_text)
+
+        items_display = []
+        for idx, it in enumerate(items_data, 1):
+            items_display.append(
+                ft.Row(
+                    controls=[
+                        ft.Text(f"{idx}. {it['item_name']}", size=13, weight=ft.FontWeight.W_500, expand=True),
+                        ft.Text(f"{it['quantity']} × {currency_symbol}{it['unit_price']:.2f}", size=12, color=ft.Colors.GREY_600),
+                        ft.Text(f"{currency_symbol}{it['line_total']:.2f}", size=13, weight=ft.FontWeight.BOLD)
+                    ],
+                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN
+                )
+            )
+
+        def on_whatsapp_click(e):
+            utils.open_url(page, wa_url)
+            utils.show_snack_bar(page, "💬 Opening WhatsApp...")
+
+        def on_copy_click(e):
+            utils.copy_to_clipboard(page, wa_text)
+            utils.show_snack_bar(page, "📋 Bill copied to clipboard! You can paste anywhere.")
+
+        dialog = ft.AlertDialog(
+            title=ft.Row([
+                ft.Text(f"Invoice {inv_data['invoice_number']}", weight=ft.FontWeight.BOLD, size=16),
+                ft.Container(
+                    content=ft.Text(inv_data.get("payment_mode", "Cash"), size=11, color=ft.Colors.WHITE),
+                    bgcolor=ft.Colors.GREEN_600 if inv_data.get("payment_mode") == "Cash" else ft.Colors.BLUE_600,
+                    padding=ft.Padding(8, 2, 8, 2),
+                    border_radius=12
+                )
+            ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+            content=ft.Container(
+                width=340,
+                content=ft.Column(
+                    tight=True,
+                    spacing=8,
+                    controls=[
+                        ft.Text(f"Date: {inv_data.get('created_at', '')}", size=11, color=ft.Colors.GREY_600),
+                        ft.Text(
+                            f"Customer: {inv_data['customer_name'] or 'Walk-in'}" + (f" ({inv_data['customer_phone']})" if inv_data.get("customer_phone") else ""),
+                            size=12
+                        ),
+                        ft.Divider(),
+                        ft.Text("Items:", weight=ft.FontWeight.BOLD, size=12),
+                        ft.Column(controls=items_display, spacing=3),
+                        ft.Divider(),
+                        ft.Row(
+                            [ft.Text("Subtotal:", size=12), ft.Text(f"{currency_symbol}{inv_data['subtotal']:.2f}", size=12)],
+                            alignment=ft.MainAxisAlignment.SPACE_BETWEEN
+                        ),
+                        ft.Row(
+                            [ft.Text("Discount:", size=12), ft.Text(f"-{currency_symbol}{inv_data['discount']:.2f}", size=12)],
+                            alignment=ft.MainAxisAlignment.SPACE_BETWEEN
+                        ) if inv_data.get('discount', 0) > 0 else ft.Container(),
+                        ft.Row(
+                            [ft.Text("Grand Total:", size=15, weight=ft.FontWeight.BOLD), ft.Text(f"{currency_symbol}{inv_data['grand_total']:.2f}", size=16, weight=ft.FontWeight.BOLD, color=ft.Colors.GREEN_600)],
+                            alignment=ft.MainAxisAlignment.SPACE_BETWEEN
+                        ),
+                        ft.Container(
+                            padding=ft.Padding(6, 4, 6, 4),
+                            border_radius=6,
+                            bgcolor=ft.Colors.GREY_100,
+                            content=ft.Text(
+                                f"📄 PDF saved in: {os.path.basename(pdf_path)}" if pdf_path else "📄 PDF saved in Downloads/VendorInvoices",
+                                size=10,
+                                color=ft.Colors.GREY_700
+                            )
+                        )
+                    ]
+                )
+            ),
+            actions=[
+                ft.FilledButton("WhatsApp", icon=ft.Icons.SEND, style=ft.ButtonStyle(bgcolor=ft.Colors.GREEN_600), on_click=on_whatsapp_click),
+                ft.OutlinedButton("Copy Text", icon=ft.Icons.COPY, on_click=on_copy_click),
+                ft.TextButton("New Bill", on_click=lambda e: utils.close_dialog(page, dialog))
+            ],
+            actions_alignment=ft.MainAxisAlignment.END
+        )
+        utils.open_dialog(page, dialog)
+
     def handle_save_invoice(action_type: str = "save"):
         inv_data, items_data = validate_and_collect_data()
         if not inv_data:
@@ -422,23 +507,19 @@ def create_billing_view(page: ft.Page, on_invoice_created: Callable = None) -> f
         )
 
         current_shop = database.get_shop_settings()
+        pdf_path = pdf_service.generate_pdf_invoice(current_shop, inv_data, items_data)
 
-        if action_type == "pdf":
-            # Generate PDF
-            pdf_path = pdf_service.generate_pdf_invoice(current_shop, inv_data, items_data)
-            utils.show_snack_bar(
-                page,
-                text=f"✅ Invoice saved & PDF generated:\n{os.path.basename(pdf_path)}",
-                action="Open PDF",
-                on_action=lambda e: os.startfile(pdf_path) if hasattr(os, "startfile") else None
-            )
-        elif action_type == "whatsapp":
-            # Generate WhatsApp Text and Open Share link
+        if action_type == "whatsapp":
             wa_text = utils.generate_whatsapp_bill_text(current_shop, inv_data, items_data)
             wa_url = utils.get_whatsapp_share_url(inv_data["customer_phone"], wa_text)
             utils.open_url(page, wa_url)
-            utils.show_snack_bar(page, "✅ Invoice saved! Opening WhatsApp...")
+            show_receipt_modal(inv_data, items_data, pdf_path)
+            utils.show_snack_bar(page, "✅ Invoice saved & opening WhatsApp!")
+        elif action_type == "pdf":
+            show_receipt_modal(inv_data, items_data, pdf_path)
+            utils.show_snack_bar(page, f"✅ PDF Saved: {os.path.basename(pdf_path)}")
         else:
+            show_receipt_modal(inv_data, items_data, pdf_path)
             utils.show_snack_bar(page, f"✅ Invoice #{inv_data['invoice_number']} saved successfully!")
 
         if on_invoice_created:

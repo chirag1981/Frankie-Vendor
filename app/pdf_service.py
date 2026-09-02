@@ -29,6 +29,23 @@ class ModernInvoicePDF(FPDF):
         self.cell(0, 10, f"Page {self.page_no()}/{{nb}} | Powered by Quick Vendor Invoice", align="C")
 
 
+def get_pdf_output_dir() -> str:
+    """Returns the best storage directory for PDFs across Android and Desktop."""
+    # Check if Android Public Downloads is available
+    android_public_downloads = "/storage/emulated/0/Download/VendorInvoices"
+    try:
+        if os.path.exists("/storage/emulated/0/Download"):
+            os.makedirs(android_public_downloads, exist_ok=True)
+            return android_public_downloads
+    except Exception:
+        pass
+
+    # App-specific local fallback
+    local_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "invoices_pdf")
+    os.makedirs(local_dir, exist_ok=True)
+    return local_dir
+
+
 def generate_pdf_invoice(
     shop_settings: Dict[str, Any],
     invoice: Dict[str, Any],
@@ -39,7 +56,7 @@ def generate_pdf_invoice(
     Generates a professional A4 / A5 PDF receipt and returns the file path.
     """
     if not output_dir:
-        output_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "invoices_pdf")
+        output_dir = get_pdf_output_dir()
     os.makedirs(output_dir, exist_ok=True)
 
     filename = f"Invoice_{invoice.get('invoice_number', 'bill')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"

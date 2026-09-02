@@ -89,7 +89,8 @@ class TestVendorInvoiceApp(unittest.TestCase):
         self.assertIn("ROHIT SHARMA", wa_text)
 
         wa_url = utils.get_whatsapp_share_url(full_inv["customer_phone"], wa_text)
-        self.assertIn("wa.me/919876501234", wa_url)
+        self.assertIn("919876501234", wa_url)
+        self.assertIn("api.whatsapp.com/send", wa_url)
 
         # Test PDF Generation
         pdf_path = pdf_service.generate_pdf_invoice(shop, full_inv, full_inv["items"])
