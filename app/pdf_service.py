@@ -171,12 +171,5 @@ def generate_pdf_invoice(
     pdf.cell(25, 7, "Grand Total:", align="R")
     pdf.cell(23, 7, f"{currency} {grand_total:.2f}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align="R")
 
-    pdf.ln(4)
-    # --- Footer Note ---
-    if shop_settings.get("footer_note"):
-        pdf.set_font("Helvetica", "I", 8)
-        pdf.set_text_color(100, 116, 139)
-        pdf.cell(0, 5, f"\"{shop_settings['footer_note']}\"", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align="C")
-
     pdf.output(filepath)
     return filepath

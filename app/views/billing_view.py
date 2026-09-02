@@ -255,8 +255,6 @@ def create_billing_view(page: ft.Page, on_invoice_created: Callable = None) -> f
         options=[
             ft.DropdownOption("Cash"),
             ft.DropdownOption("UPI / Online"),
-            ft.DropdownOption("Card"),
-            ft.DropdownOption("Due / Credit"),
         ]
     )
     grand_total_text = ft.Text(
