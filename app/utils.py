@@ -92,17 +92,21 @@ def get_whatsapp_share_url(phone: str, message: str) -> str:
 def open_url(page: Any, url: str) -> None:
     """Launches a URL seamlessly on Android (opens WhatsApp app directly) and Desktop/Web (opens browser)."""
     import webbrowser
-    import flet as ft
+    import inspect
 
-    # 1. Native Page.launch_url (synchronous Flutter url_launcher hook)
+    # 1. Native Page.launch_url via run_task
     if hasattr(page, "launch_url"):
         try:
-            page.launch_url(url, web_popup_window_name="_blank")
-        except Exception:
-            try:
+            async def _launch():
+                res = page.launch_url(url, web_popup_window_name="_blank")
+                if inspect.isawaitable(res):
+                    await res
+            if hasattr(page, "run_task"):
+                page.run_task(_launch)
+            else:
                 page.launch_url(url)
-            except Exception:
-                pass
+        except Exception:
+            pass
 
     # 2. Desktop OS browser fallback
     try:
@@ -115,14 +119,15 @@ def open_url(page: Any, url: str) -> None:
 
 
 def share_pdf_file(page: Any, pdf_path: str, message: str = "") -> None:
-    """Shares the actual PDF file directly to WhatsApp / Android apps."""
+    """Shares the actual PDF file directly to WhatsApp / Android apps, or opens in viewer on Web/Desktop."""
     import flet as ft
+    import webbrowser
 
     if not pdf_path or not os.path.exists(pdf_path):
         show_snack_bar(page, "📄 PDF not found.")
         return
 
-    # Mobile native sharing service
+    # Mobile native sharing service (Android / iOS)
     async def _async_share():
         try:
             share_service = ft.Share()
@@ -135,17 +140,28 @@ def share_pdf_file(page: Any, pdf_path: str, message: str = "") -> None:
                 title="Invoice PDF"
             )
         except Exception as err:
-            print(f"[Share File Error]: {err}")
+            # Fallback if Web/Desktop doesn't support Share control
+            try:
+                webbrowser.open(pdf_path)
+            except Exception:
+                pass
 
     if hasattr(page, "run_task"):
         try:
             page.run_task(_async_share)
-            return
         except Exception:
-            pass
+            try:
+                webbrowser.open(pdf_path)
+            except Exception:
+                pass
 
-    # Fallback confirmation for web/desktop
-    show_snack_bar(page, f"📄 PDF saved: {os.path.basename(pdf_path)}")
+    # Desktop / Web direct open fallback
+    try:
+        webbrowser.open(pdf_path)
+    except Exception:
+        pass
+
+    show_snack_bar(page, f"📄 PDF ready: {os.path.basename(pdf_path)}")
 
 
 def copy_to_clipboard(page: Any, text: str) -> None:
