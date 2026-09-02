@@ -1,74 +1,47 @@
-name: Build Android APK
+name: Build Android APK (Native Kotlin)
 
 on:
   push:
+    branches: [ main, master ]
+  pull_request:
     branches: [ main, master ]
   workflow_dispatch:
 
 jobs:
   build:
+    name: Build Native Android APK
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v4
 
-      - name: Set up Java JDK 17
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: 'stable'
-          cache: true
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
 
-      - name: Accept Android SDK Licenses
+      - name: Make Gradlew Executable
+        run: chmod +x gradlew
+
+      - name: Run Unit Tests
+        run: ./gradlew testDebugUnitTest --no-daemon
+
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Locate APK File
         run: |
-          yes | flutter doctor --android-licenses || true
-          flutter doctor -v
+          ls -la app/build/outputs/apk/debug/ || true
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          cache: 'pip'
-
-      - name: Install Build Tools & Dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install flet flet-cli fpdf2
-
-      - name: Build Android APK (Optimized & Split by ABI)
-        run: |
-          flet build apk . \
-            --project "QuickVendorInvoice" \
-            --product "Quick Vendor Invoice" \
-            --org "com.vendor.invoice" \
-            --module-name main \
-            -o build/apk \
-            --split-per-abi \
-            --cleanup-packages \
-            --cleanup-app \
-            --android-permissions "android.permission.INTERNET=true" "android.permission.QUERY_ALL_PACKAGES=true" \
-            --yes \
-            --no-rich-output \
-            -vv
-
-      - name: List Generated Build Files
-        if: always()
-        run: |
-          ls -lh build/apk/ || true
-          find build -type f -name "*.apk" -exec ls -lh {} + || true
-
-      - name: Upload APK Artifacts
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Quick-Vendor-Invoice-APKs
-          path: |
-            build/apk/*.apk
-            build/apk/**/*.apk
-            build/app/outputs/flutter-apk/*.apk
-          if-no-files-found: warn
+          name: Quick-Vendor-Invoice-APK
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 30
