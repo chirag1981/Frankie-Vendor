@@ -119,15 +119,25 @@ def open_url(page: Any, url: str) -> None:
 
 
 def share_pdf_file(page: Any, pdf_path: str, message: str = "") -> None:
-    """Shares the actual PDF file directly to WhatsApp / Android apps, or opens in viewer on Web/Desktop."""
-    import flet as ft
+    """Shares the actual PDF file directly on Android/iOS, or opens in viewer on Web/Desktop."""
     import webbrowser
 
     if not pdf_path or not os.path.exists(pdf_path):
         show_snack_bar(page, "📄 PDF not found.")
         return
 
-    # Mobile native sharing service (Android / iOS)
+    # 1. If running in Web Browser mode, do NOT instantiate mobile ft.Share (avoids red screen crash)
+    is_web = getattr(page, "web", False)
+    if is_web:
+        try:
+            webbrowser.open(os.path.abspath(pdf_path))
+        except Exception:
+            pass
+        show_snack_bar(page, f"📄 PDF saved: {os.path.basename(pdf_path)}")
+        return
+
+    # 2. Native Mobile APK sharing service (Android / iOS)
+    import flet as ft
     async def _async_share():
         try:
             share_service = ft.Share()
@@ -140,7 +150,6 @@ def share_pdf_file(page: Any, pdf_path: str, message: str = "") -> None:
                 title="Invoice PDF"
             )
         except Exception as err:
-            # Fallback if Web/Desktop doesn't support Share control
             try:
                 webbrowser.open(pdf_path)
             except Exception:
@@ -149,19 +158,16 @@ def share_pdf_file(page: Any, pdf_path: str, message: str = "") -> None:
     if hasattr(page, "run_task"):
         try:
             page.run_task(_async_share)
+            return
         except Exception:
-            try:
-                webbrowser.open(pdf_path)
-            except Exception:
-                pass
+            pass
 
-    # Desktop / Web direct open fallback
+    # Desktop fallback
     try:
         webbrowser.open(pdf_path)
     except Exception:
         pass
-
-    show_snack_bar(page, f"📄 PDF ready: {os.path.basename(pdf_path)}")
+    show_snack_bar(page, f"📄 PDF saved: {os.path.basename(pdf_path)}")
 
 
 def copy_to_clipboard(page: Any, text: str) -> None:
