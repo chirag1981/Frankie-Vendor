@@ -68,7 +68,9 @@ def main(page: ft.Page):
     # Initial view load
     switch_tab(0)
 
-    page.add(body_container)
+    # Wrap in SafeArea to prevent overlap with Android status bar, camera notch, and navigation
+    safe_area = ft.SafeArea(content=body_container, expand=True)
+    page.add(safe_area)
 
 
 import sys

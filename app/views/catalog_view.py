@@ -12,7 +12,7 @@ def create_catalog_view(page: ft.Page, on_catalog_changed: Callable = None) -> f
     shop_settings = database.get_shop_settings()
     currency_symbol = shop_settings.get("currency", "₹")
 
-    catalog_items_column = ft.Column(spacing=6)
+    catalog_items_column = ft.Column(spacing=8)
 
     def show_item_modal(item_id: int = None, existing_name: str = "", existing_price: float = 0.0, existing_category: str = "Frankie"):
         name_input = ft.TextField(
@@ -112,8 +112,16 @@ def create_catalog_view(page: ft.Page, on_catalog_changed: Callable = None) -> f
             catalog_items_column.controls.append(
                 ft.Container(
                     alignment=ft.Alignment(0, 0),
-                    padding=30,
-                    content=ft.Text("No menu items yet. Click '+ Add Item' to start!", color=ft.Colors.GREY_500)
+                    padding=40,
+                    content=ft.Column(
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                        spacing=8,
+                        controls=[
+                            ft.Icon(ft.Icons.RESTAURANT_MENU_OUTLINED, size=48, color=ft.Colors.GREY_400),
+                            ft.Text("No menu items yet.", size=14, color=ft.Colors.GREY_600),
+                            ft.Text("Click '+ Add Item' above to start your menu!", size=12, color=ft.Colors.GREY_500)
+                        ]
+                    )
                 )
             )
             return
@@ -125,32 +133,55 @@ def create_catalog_view(page: ft.Page, on_catalog_changed: Callable = None) -> f
                 current_cat = cat
                 catalog_items_column.controls.append(
                     ft.Container(
-                        padding=ft.Padding(0, 10, 0, 4),
-                        content=ft.Text(f"📂 {current_cat}", weight=ft.FontWeight.BOLD, size=13, color=ft.Colors.PRIMARY)
+                        padding=ft.Padding(4, 12, 4, 4),
+                        content=ft.Row([
+                            ft.Icon(ft.Icons.FOLDER_OPEN, size=16, color=ft.Colors.PRIMARY),
+                            ft.Text(f"{current_cat}", weight=ft.FontWeight.BOLD, size=13, color=ft.Colors.PRIMARY)
+                        ], spacing=6)
                     )
                 )
 
             card = ft.Card(
                 elevation=1,
-                shape=ft.RoundedRectangleBorder(radius=8),
-                content=ft.ListTile(
-                    title=ft.Text(it["name"], weight=ft.FontWeight.W_500, size=14),
-                    subtitle=ft.Text(f"{currency_symbol}{it['price']:.2f}", weight=ft.FontWeight.BOLD, color=ft.Colors.GREEN_600),
-                    trailing=ft.Row(
-                        tight=True,
+                shape=ft.RoundedRectangleBorder(radius=10),
+                content=ft.Container(
+                    padding=ft.Padding(12, 8, 8, 8),
+                    content=ft.Row(
                         controls=[
-                            ft.IconButton(
-                                icon=ft.Icons.EDIT_OUTLINED,
-                                icon_size=18,
-                                on_click=lambda e, item=it: show_item_modal(item["id"], item["name"], item["price"], item["category"])
+                            ft.Column(
+                                controls=[
+                                    ft.Text(it["name"], weight=ft.FontWeight.BOLD, size=14),
+                                    ft.Container(
+                                        padding=ft.Padding(6, 2, 6, 2),
+                                        border_radius=6,
+                                        bgcolor=ft.Colors.GREEN_50,
+                                        content=ft.Text(f"{currency_symbol}{it['price']:.2f}", weight=ft.FontWeight.BOLD, size=12, color=ft.Colors.GREEN_700)
+                                    )
+                                ],
+                                spacing=4,
+                                expand=True
                             ),
-                            ft.IconButton(
-                                icon=ft.Icons.DELETE_OUTLINE,
-                                icon_color=ft.Colors.RED_400,
-                                icon_size=18,
-                                on_click=lambda e, item=it: confirm_delete(item["id"], item["name"])
+                            ft.Row(
+                                tight=True,
+                                controls=[
+                                    ft.IconButton(
+                                        icon=ft.Icons.EDIT_OUTLINED,
+                                        icon_size=20,
+                                        tooltip="Edit Price / Name",
+                                        on_click=lambda e, item=it: show_item_modal(item["id"], item["name"], item["price"], item["category"])
+                                    ),
+                                    ft.IconButton(
+                                        icon=ft.Icons.DELETE_OUTLINE,
+                                        icon_color=ft.Colors.RED_400,
+                                        icon_size=20,
+                                        tooltip="Remove Item",
+                                        on_click=lambda e, item=it: confirm_delete(item["id"], item["name"])
+                                    )
+                                ],
+                                spacing=0
                             )
-                        ]
+                        ],
+                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN
                     )
                 )
             )
@@ -164,27 +195,42 @@ def create_catalog_view(page: ft.Page, on_catalog_changed: Callable = None) -> f
     load_catalog()
 
     return ft.Container(
-        padding=ft.Padding(12, 8, 12, 8),
+        padding=ft.Padding(14, 12, 14, 24),
         content=ft.Column(
             scroll=ft.ScrollMode.AUTO,
-            spacing=10,
+            spacing=12,
             controls=[
-                ft.Row(
-                    controls=[
-                        ft.Column([
-                            ft.Text("Menu & Price Catalog", size=16, weight=ft.FontWeight.BOLD),
-                            ft.Text("Pre-configure items for quick 1-tap billing", size=11, color=ft.Colors.GREY_600)
-                        ]),
-                        ft.FilledButton(
-                            "+ Add Item",
-                            style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8)),
-                            on_click=lambda e: show_item_modal()
+                # Top Header Banner
+                ft.Card(
+                    elevation=1,
+                    content=ft.Container(
+                        padding=12,
+                        content=ft.Row(
+                            controls=[
+                                ft.Column(
+                                    controls=[
+                                        ft.Text("Menu & Price Catalog", size=16, weight=ft.FontWeight.BOLD),
+                                        ft.Text("Pre-configure items for 1-tap billing", size=11, color=ft.Colors.GREY_600)
+                                    ],
+                                    spacing=2,
+                                    expand=True
+                                ),
+                                ft.FilledButton(
+                                    "+ Add Item",
+                                    icon=ft.Icons.ADD,
+                                    style=ft.ButtonStyle(
+                                        shape=ft.RoundedRectangleBorder(radius=8),
+                                        padding=ft.Padding(10, 8, 12, 8)
+                                    ),
+                                    on_click=lambda e: show_item_modal()
+                                )
+                            ],
+                            alignment=ft.MainAxisAlignment.SPACE_BETWEEN
                         )
-                    ],
-                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN
+                    )
                 ),
                 catalog_items_column,
-                ft.Container(height=20)
+                ft.Container(height=24)
             ]
         )
     )
