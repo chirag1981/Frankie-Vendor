@@ -28,9 +28,6 @@ def main(page: ft.Page):
         use_material3=True,
     )
 
-    # Register system URL launcher and file sharing services
-    page.overlay.extend([ft.UrlLauncher(), ft.Share()])
-
     # Initialize SQLite schema and initial data
     database.init_db()
 

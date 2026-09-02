@@ -94,36 +94,17 @@ def open_url(page: Any, url: str) -> None:
     import webbrowser
     import flet as ft
 
-    # 1. Primary: Flet UrlLauncher Service with EXTERNAL_APPLICATION mode for Android/iOS
-    if hasattr(page, "overlay"):
-        launcher = None
-        for ctrl in getattr(page, "overlay", []):
-            if isinstance(ctrl, ft.UrlLauncher):
-                launcher = ctrl
-                break
-        if not launcher:
-            launcher = ft.UrlLauncher()
-            page.overlay.append(launcher)
-            page.update()
-        try:
-            launcher.launch_url(url, mode=ft.LaunchMode.EXTERNAL_APPLICATION)
-            return
-        except Exception as err:
-            print(f"[UrlLauncher Warning]: {err}")
-
-    # 2. Secondary: Native Page.launch_url
+    # 1. Native Page.launch_url (synchronous Flutter url_launcher hook)
     if hasattr(page, "launch_url"):
         try:
             page.launch_url(url, web_popup_window_name="_blank")
-            return
         except Exception:
             try:
                 page.launch_url(url)
-                return
             except Exception:
                 pass
 
-    # 3. Desktop OS browser fallback
+    # 2. Desktop OS browser fallback
     try:
         webbrowser.open_new_tab(url)
     except Exception:
@@ -136,25 +117,35 @@ def open_url(page: Any, url: str) -> None:
 def share_pdf_file(page: Any, pdf_path: str, message: str = "") -> None:
     """Shares the actual PDF file directly to WhatsApp / Android apps."""
     import flet as ft
-    if hasattr(page, "overlay") and pdf_path and os.path.exists(pdf_path):
-        share_service = None
-        for ctrl in getattr(page, "overlay", []):
-            if isinstance(ctrl, ft.Share):
-                share_service = ctrl
-                break
-        if not share_service:
-            share_service = ft.Share()
-            page.overlay.append(share_service)
-            page.update()
+
+    if not pdf_path or not os.path.exists(pdf_path):
+        show_snack_bar(page, "📄 PDF not found.")
+        return
+
+    # Mobile native sharing service
+    async def _async_share():
         try:
-            share_service.share_files(
+            share_service = ft.Share()
+            if hasattr(page, "overlay"):
+                page.overlay.append(share_service)
+                page.update()
+            await share_service.share_files(
                 [ft.ShareFile(pdf_path)],
                 text=message,
                 title="Invoice PDF"
             )
+        except Exception as err:
+            print(f"[Share File Error]: {err}")
+
+    if hasattr(page, "run_task"):
+        try:
+            page.run_task(_async_share)
             return
         except Exception:
             pass
+
+    # Fallback confirmation for web/desktop
+    show_snack_bar(page, f"📄 PDF saved: {os.path.basename(pdf_path)}")
 
 
 def copy_to_clipboard(page: Any, text: str) -> None:
