@@ -1,4 +1,4 @@
-name: Build Android APK (Native Kotlin)
+﻿name: Build Android APK (Native Kotlin)
 
 on:
   push:
@@ -22,20 +22,18 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Gradle
+      - name: Setup Gradle 8.9
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
+          cache-disabled: true
 
-      - name: Grant Execute Permission for Gradlew
-        run: chmod +x gradlew
-
-      - name: Build Debug APK
-        run: ./gradlew assembleDebug --no-daemon --stacktrace --info
+      - name: Build Debug APK with Gradle
+        run: gradle assembleDebug --stacktrace --info
 
       - name: Locate APK File
         run: |
-          ls -la app/build/outputs/apk/debug/ || true
+          find app/build/outputs -name "*.apk" || true
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4

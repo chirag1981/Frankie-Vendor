@@ -1,39 +1,19 @@
-# Android & Gradle
-.gradle/
+﻿*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
 build/
-app/build/
-*.apk
-*.ap_
-*.aab
-*.dex
-*.class
+*/build/
 captures/
 .externalNativeBuild
-.cxx/
+.cxx
 local.properties
-
-# Python & Caches
-__pycache__/
-*.py[cod]
-*.so
-.Python
-env/
-venv/
-.venv/
-dist/
-downloads/
-*.egg-info/
-
-# Databases & Generated Files
+*.hprof
 *.db
 *.sqlite3
-*.pdf
-generated_invoices/
-invoices_pdf/
-
-# IDE & OS
-.idea/
-.vscode/
-*.iml
-.DS_Store
-Thumbs.db
