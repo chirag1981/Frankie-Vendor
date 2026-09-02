@@ -112,6 +112,30 @@ def open_url(page: Any, url: str) -> None:
             pass
 
 
+def share_pdf_file(page: Any, pdf_path: str, message: str = "") -> None:
+    """Shares the actual PDF file directly to WhatsApp / Android apps."""
+    import flet as ft
+    if hasattr(page, "overlay") and pdf_path and os.path.exists(pdf_path):
+        share_service = None
+        for ctrl in getattr(page, "overlay", []):
+            if isinstance(ctrl, ft.Share):
+                share_service = ctrl
+                break
+        if not share_service:
+            share_service = ft.Share()
+            page.overlay.append(share_service)
+            page.update()
+        try:
+            share_service.share_files(
+                [ft.ShareFile(pdf_path)],
+                text=message,
+                title="Invoice PDF"
+            )
+            return
+        except Exception:
+            pass
+
+
 def copy_to_clipboard(page: Any, text: str) -> None:
     """Copies text to the system clipboard across Android, Web, and Desktop."""
     try:
