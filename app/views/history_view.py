@@ -43,6 +43,10 @@ def create_history_view(page: ft.Page) -> ft.Control:
         if not full_inv:
             return
 
+        current_shop = database.get_shop_settings()
+        wa_text = utils.generate_whatsapp_bill_text(current_shop, full_inv, full_inv.get("items", []))
+        wa_url = utils.get_whatsapp_share_url(full_inv.get("customer_phone", ""), wa_text)
+
         items_display = []
         for idx, it in enumerate(full_inv.get("items", []), 1):
             items_display.append(
@@ -57,21 +61,15 @@ def create_history_view(page: ft.Page) -> ft.Control:
             )
 
         def reshare_wa(e):
-            current_shop = database.get_shop_settings()
-            wa_text = utils.generate_whatsapp_bill_text(current_shop, full_inv, full_inv["items"])
-            wa_url = utils.get_whatsapp_share_url(full_inv["customer_phone"], wa_text)
             utils.open_url(page, wa_url)
             utils.show_snack_bar(page, "💬 Opening WhatsApp...")
 
         def copy_text(e):
-            current_shop = database.get_shop_settings()
-            wa_text = utils.generate_whatsapp_bill_text(current_shop, full_inv, full_inv["items"])
             utils.copy_to_clipboard(page, wa_text)
             utils.show_snack_bar(page, "📋 Bill copied to clipboard! You can paste anywhere.")
 
         def reprint_pdf(e):
-            current_shop = database.get_shop_settings()
-            pdf_path = pdf_service.generate_pdf_invoice(current_shop, full_inv, full_inv["items"])
+            pdf_path = pdf_service.generate_pdf_invoice(current_shop, full_inv, full_inv.get("items", []))
             utils.show_snack_bar(page, f"📄 PDF saved in Downloads: {os.path.basename(pdf_path)}")
 
         def confirm_delete_inv(e):
