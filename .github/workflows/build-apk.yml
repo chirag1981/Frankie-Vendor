@@ -52,6 +52,7 @@ jobs:
             --split-per-abi \
             --cleanup-packages \
             --cleanup-app \
+            --android-permissions "android.permission.INTERNET=true" "android.permission.QUERY_ALL_PACKAGES=true" \
             --yes \
             --no-rich-output \
             -vv
