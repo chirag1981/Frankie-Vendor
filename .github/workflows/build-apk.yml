@@ -41,17 +41,21 @@ jobs:
       - name: Run Tests
         run: flutter test
 
-      - name: Build Debug APK
-        run: flutter build apk --debug
-
-      - name: Locate APK File
+      - name: Build Release & Debug APKs
         run: |
-          find build/app/outputs -name "*.apk" || true
+          flutter build apk --release
+          flutter build apk --debug
+
+      - name: Prepare Named APKs
+        run: |
+          mkdir -p dist_apk
+          cp build/app/outputs/apk/release/Frankie-Vendor-release.apk dist_apk/Frankie-Vendor.apk || cp build/app/outputs/flutter-apk/app-release.apk dist_apk/Frankie-Vendor.apk
+          cp build/app/outputs/apk/debug/Frankie-Vendor-debug.apk dist_apk/Frankie-Vendor-debug.apk || true
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Quick-Vendor-Invoice-Flutter-APK
-          path: build/app/outputs/flutter-apk/*.apk
+          name: Frankie-Vendor-APK
+          path: dist_apk/*.apk
           if-no-files-found: warn
           retention-days: 30
