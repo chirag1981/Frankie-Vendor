@@ -106,6 +106,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               labelText: 'Contact Phone',
                               prefixIcon: Icon(Icons.phone_outlined),
                             ),
+                            validator: (v) {
+                              if (v != null && v.trim().isNotEmpty) {
+                                final digits = v.replaceAll(RegExp(r'\D'), '');
+                                if (digits.length < 10 || digits.length > 15) {
+                                  return 'Enter a valid 10-digit phone number';
+                                }
+                              }
+                              return null;
+                            },
                           ),
                           const SizedBox(height: 14),
                           TextFormField(
@@ -154,6 +163,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               hintText: '0 for no tax, or 5, 12, 18',
                               prefixIcon: Icon(Icons.percent_outlined),
                             ),
+                            validator: (v) {
+                              if (v != null && v.trim().isNotEmpty) {
+                                final val = double.tryParse(v.trim());
+                                if (val == null) return 'Must be a valid number';
+                                if (val < 0 || val > 100) {
+                                  return 'Tax must be between 0% and 100%';
+                                }
+                              }
+                              return null;
+                            },
                           ),
                           const SizedBox(height: 14),
                           TextFormField(

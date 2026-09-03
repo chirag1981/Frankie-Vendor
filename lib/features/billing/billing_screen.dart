@@ -680,7 +680,7 @@ class _BillingScreenState extends ConsumerState<BillingScreen> {
               final price = double.tryParse(priceCtrl.text.trim()) ?? 0.0;
               final qty = double.tryParse(qtyCtrl.text.trim()) ?? 1.0;
 
-              if (name.isNotEmpty && price > 0) {
+              if (name.isNotEmpty && price > 0 && qty > 0) {
                 ref
                     .read(billingCartProvider.notifier)
                     .addCustomItem(name, price, qty);
