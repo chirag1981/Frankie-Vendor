@@ -1,9 +1,13 @@
+import 'dart:io';
 import 'dart:typed_data';
+import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../models/models.dart';
 import 'currency_utils.dart';
+import 'whatsapp_formatter.dart';
 
 class PdfInvoiceGenerator {
   static Future<Uint8List> generateInvoicePdf({
@@ -11,17 +15,37 @@ class PdfInvoiceGenerator {
     required Invoice invoice,
     required List<InvoiceItem> items,
   }) async {
-    final pdf = pw.Document();
+    pw.ThemeData? theme;
+    bool hasUnicodeRupee = false;
+
+    try {
+      final regularFont = await PdfGoogleFonts.notoSansDevanagariRegular();
+      final boldFont = await PdfGoogleFonts.notoSansDevanagariBold();
+      theme = pw.ThemeData.withFont(
+        base: regularFont,
+        bold: boldFont,
+      );
+      hasUnicodeRupee = true;
+    } catch (_) {
+      // Offline fallback: Use standard Helvetica with 'Rs. ' so it never displays ☒
+    }
+
+    final pdf = pw.Document(theme: theme);
 
     final shopName = shopSettings.shopName.toUpperCase().isEmpty
         ? 'FRANKIE CORNER'
         : shopSettings.shopName.toUpperCase();
-    final currency = shopSettings.currency.isEmpty ? '₹' : shopSettings.currency;
+
+    // Use ₹ if Indian font is loaded, otherwise use 'Rs. ' to avoid missing glyph [X]
+    final currency = hasUnicodeRupee
+        ? (shopSettings.currency.isEmpty ? '₹' : shopSettings.currency)
+        : 'Rs. ';
 
     pdf.addPage(
       pw.Page(
         pageFormat: PdfPageFormat.roll80,
         margin: const pw.EdgeInsets.all(12),
+        theme: theme,
         build: (pw.Context context) {
           return pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.center,
@@ -184,6 +208,67 @@ class PdfInvoiceGenerator {
     );
 
     return pdf.save();
+  }
+
+  /// Saves the PDF invoice directly to the device's Downloads directory (or app documents)
+  static Future<String> saveInvoicePdfToDownloads({
+    required ShopSettings shopSettings,
+    required Invoice invoice,
+    required List<InvoiceItem> items,
+  }) async {
+    final pdfBytes = await generateInvoicePdf(
+      shopSettings: shopSettings,
+      invoice: invoice,
+      items: items,
+    );
+
+    final fileName = 'Invoice_${invoice.invoiceNumber}.pdf';
+
+    // 1. Try public Download folder on Android
+    final downloadDir = Directory('/storage/emulated/0/Download');
+    if (await downloadDir.exists()) {
+      try {
+        final target = File('${downloadDir.path}/$fileName');
+        await target.writeAsBytes(pdfBytes);
+        return target.path;
+      } catch (_) {}
+    }
+
+    // 2. Fallback to app documents
+    final docDir = await getApplicationDocumentsDirectory();
+    final file = File('${docDir.path}/$fileName');
+    await file.writeAsBytes(pdfBytes);
+    return file.path;
+  }
+
+  /// Saves the invoice to storage and sends/shares to WhatsApp
+  static Future<String> saveAndSendToWhatsApp({
+    required ShopSettings shopSettings,
+    required Invoice invoice,
+    required List<InvoiceItem> items,
+  }) async {
+    // 1. Save PDF file
+    final savedPath = await saveInvoicePdfToDownloads(
+      shopSettings: shopSettings,
+      invoice: invoice,
+      items: items,
+    );
+
+    // 2. Generate formatted WhatsApp receipt text
+    final billText = WhatsAppFormatter.generateBillText(
+      shopSettings: shopSettings,
+      invoice: invoice,
+      items: items,
+    );
+
+    // 3. Share the PDF document and bill text directly to WhatsApp
+    await Share.shareXFiles(
+      [XFile(savedPath, mimeType: 'application/pdf', name: 'Invoice_${invoice.invoiceNumber}.pdf')],
+      text: billText,
+      subject: 'Invoice ${invoice.invoiceNumber}',
+    );
+
+    return savedPath;
   }
 
   static Future<void> printReceipt({

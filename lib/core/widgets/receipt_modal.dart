@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../models/models.dart';
 import '../utils/currency_utils.dart';
 import '../utils/pdf_invoice_generator.dart';
-import '../utils/whatsapp_formatter.dart';
 
 class ReceiptModal extends StatelessWidget {
   final ShopSettings shopSettings;
@@ -323,49 +322,98 @@ class ReceiptModal extends StatelessWidget {
             ),
             child: Row(
               children: [
-                // Print Button
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      PdfInvoiceGenerator.printReceipt(
+                // Quick Save PDF Only Button
+                IconButton.filledTonal(
+                  tooltip: 'Save PDF to Phone',
+                  onPressed: () async {
+                    try {
+                      final path = await PdfInvoiceGenerator.saveInvoicePdfToDownloads(
                         shopSettings: shopSettings,
                         invoice: invoice,
                         items: items,
                       );
-                    },
-                    icon: const Icon(Icons.print_rounded, size: 18),
-                    label: const Text('Print'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF2E7D32),
-                      side: const BorderSide(color: Color(0xFF2E7D32)),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                  ),
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('📁 Invoice PDF saved to Downloads!\n$path'),
+                            backgroundColor: const Color(0xFFE65100),
+                            duration: const Duration(seconds: 4),
+                          ),
+                        );
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Error saving PDF: $e'),
+                            backgroundColor: Colors.red.shade800,
+                          ),
+                        );
+                      }
+                    }
+                  },
+                  icon: const Icon(Icons.download_rounded, color: Color(0xFFE65100)),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
 
-                // WhatsApp Button
+                // Primary "Save & Send to WhatsApp" Button
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: () {
-                      final billText = WhatsAppFormatter.generateBillText(
-                        shopSettings: shopSettings,
-                        invoice: invoice,
-                        items: items,
-                      );
-                      WhatsAppFormatter.launchWhatsApp(
-                        phone: invoice.customerPhone,
-                        message: billText,
-                      );
+                    onPressed: () async {
+                      try {
+                        final path = await PdfInvoiceGenerator.saveAndSendToWhatsApp(
+                          shopSettings: shopSettings,
+                          invoice: invoice,
+                          items: items,
+                        );
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('✅ Invoice saved to Downloads and shared to WhatsApp!\n$path'),
+                              backgroundColor: const Color(0xFF2E7D32),
+                              duration: const Duration(seconds: 4),
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Error: $e'),
+                              backgroundColor: Colors.red.shade800,
+                            ),
+                          );
+                        }
+                      }
                     },
                     icon: const Icon(Icons.send_rounded, size: 18),
-                    label: const Text('WhatsApp'),
+                    label: const Text(
+                      'Save & Send to WhatsApp',
+                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                    ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF25D366),
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                   ),
+                ),
+                const SizedBox(width: 8),
+
+                // Print Icon Button (Optional / Hardware thermal printer)
+                IconButton.outlined(
+                  tooltip: 'Thermal Print',
+                  onPressed: () {
+                    PdfInvoiceGenerator.printReceipt(
+                      shopSettings: shopSettings,
+                      invoice: invoice,
+                      items: items,
+                    );
+                  },
+                  icon: const Icon(Icons.print_rounded, size: 20, color: Color(0xFF2E7D32)),
                 ),
               ],
             ),
